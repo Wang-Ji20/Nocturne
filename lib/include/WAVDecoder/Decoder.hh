@@ -18,8 +18,6 @@ struct WAVHeader {
   unsigned int byte_rate; // sample_rate * channels * bits_per_sample / 8
   unsigned short block_align; // channels * bits_per_sample / 8
   unsigned short bits_per_sample;
-  char data[4]; // "data"
-  unsigned int data_size; // size of data chunk
 } __attribute__((packed));
 
 class Decoder {

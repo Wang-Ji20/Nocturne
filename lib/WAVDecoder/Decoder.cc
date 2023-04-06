@@ -7,25 +7,17 @@
 #include <stdexcept>
 
 // sanity check
-static bool wavChecker(const WAVHeader& header) {
+static void wavChecker(const WAVHeader& header) {
   // do some sanity checks like FFmpeg does
   if (strncmp(header.riff, "RIFF", 4) != 0) {
-    return false;
+    throw std::runtime_error("Not a RIFF file");
   }
   if (strncmp(header.wave, "WAVE", 4) != 0) {
-    return false;
+    throw std::runtime_error("Not a WAVE file");
   }
   if (strncmp(header.fmt, "fmt ", 4) != 0) {
-    return false;
+    throw std::runtime_error("Not a fmt file");
   }
-  if (strncmp(header.data, "data", 4) != 0) {
-    return false;
-  }
-  // FFmpeg do this so we do too
-  if (header.channels != 1 && header.channels != 2) {
-    return false;
-  }
-  return true;
 }
 
 Decoder::Decoder(const char* filename) {
@@ -36,7 +28,5 @@ Decoder::Decoder(const char* filename) {
   if (read(fd, &header, sizeof(WAVHeader)) != sizeof(WAVHeader)) {
     throw std::runtime_error("Failed to read WAV header");
   }
-  if (!wavChecker(header)) {
-    throw std::runtime_error("Invalid WAV file");
-  }
+  wavChecker(header);
 }

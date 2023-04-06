@@ -9,7 +9,7 @@
 
 // return the string representation of a WAVHeader
 std::string headerToString(const WAVHeader& header) {
-  std::string str;
+  std::string str = "Header Length: " + std::to_string(sizeof(WAVHeader)) + "\n";
   str += "RIFF: " + std::string(header.riff, 4) + "\n";
   str += "Size: " + std::to_string(header.size) + "\n";
   str += "WAVE: " + std::string(header.wave, 4) + "\n";
@@ -21,8 +21,6 @@ std::string headerToString(const WAVHeader& header) {
   str += "byte_rate: " + std::to_string(header.byte_rate) + "\n";
   str += "block_align: " + std::to_string(header.block_align) + "\n";
   str += "bits_per_sample: " + std::to_string(header.bits_per_sample) + "\n";
-  str += "data: " + std::string(header.data, 4) + "\n";
-  str += "data_size: " + std::to_string(header.data_size) + "\n";
   return str;
 }
 
