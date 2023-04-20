@@ -21,7 +21,7 @@ static void wavChecker(const WAVHeader &header) {
 }
 
 
-static void seekDataSection(int fd) {
+static int seekDataSection(int fd) {
   // automaton
   // 0: d
   // 1: da
@@ -55,7 +55,7 @@ static void seekDataSection(int fd) {
       break;
     case DAT:
       if (c == 'a') {
-        return;
+        return lseek(fd, 0, SEEK_CUR);
       } else {
         automaton = INIT;
       }
@@ -74,7 +74,7 @@ Decoder::Decoder(const char *filename) {
     throw std::runtime_error("Failed to read WAV header");
   }
   wavChecker(header);
-  seekDataSection(fd);
+  data_offset = seekDataSection(fd);
 }
 
 int Decoder::getData(char *buffer, int size) {

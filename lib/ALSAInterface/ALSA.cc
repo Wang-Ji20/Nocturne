@@ -96,6 +96,8 @@ ALSA::ALSA(Decoder &decoder) : decoder(decoder) {
   size = frames * wavHeader.channels * wavHeader.bits_per_sample / 8;
 
   buffer = new char[size];
+
+  playThread = std::make_unique<std::thread>(&ALSA::playLoop, this);
 }
 
 ALSA::~ALSA() {
@@ -104,14 +106,36 @@ ALSA::~ALSA() {
   delete[] buffer;
 }
 
-void ALSA::play() {
+void ALSA::playLoop() {
   while (decoder.getData(buffer, size)) {
+    std::unique_lock<std::mutex> lock(mutex);
+    if (control == PAUSE)
+      cv.wait(lock, [this] { return control == PLAY; });
+    else
+      lock.unlock();
+
     if (snd_pcm_writei(handle, buffer, frames) == -EPIPE) {
-      fprintf(stderr, "underrun occurred");
+      fprintf(stderr, "underrun occurred\n");
       snd_pcm_prepare(handle);
     } else if (rc < 0) {
-      fprintf(stderr, "error from writei: %s", snd_strerror(rc));
+      fprintf(stderr, "error from writei: %s\n", snd_strerror(rc));
       throw std::runtime_error("error from writei");
     }
   }
+}
+
+void ALSA::play() {
+  {
+    std::scoped_lock<std::mutex> lock(mutex);
+    control = PLAY;
+  }
+  cv.notify_one();
+}
+
+void ALSA::pause() {
+  {
+    std::scoped_lock<std::mutex> lock(mutex);
+    control = PAUSE;
+  }
+  cv.notify_one();
 }

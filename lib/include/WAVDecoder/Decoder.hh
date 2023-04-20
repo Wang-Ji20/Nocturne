@@ -37,4 +37,5 @@ public:
 private:
   WAVHeader header{};
   int fd{};
+  size_t data_offset{0};
 };

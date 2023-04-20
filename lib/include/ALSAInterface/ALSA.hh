@@ -7,6 +7,10 @@
 #include "WAVDecoder/Decoder.hh"
 
 #include <alsa/asoundlib.h>
+#include <mutex>
+#include <condition_variable>
+#include <thread>
+#include <memory>
 
 class ALSA {
 public:
@@ -19,8 +23,11 @@ public:
   ALSA &operator=(ALSA &&) = delete;
 
   void play();
+  void pause();
 
 private:
+  void playLoop();
+
   snd_pcm_t *handle;
   snd_pcm_hw_params_t *params;
   snd_pcm_uframes_t frames;
@@ -29,4 +36,9 @@ private:
   int size;
   char *buffer;
   Decoder &decoder;
+
+  std::unique_ptr<std::thread> playThread;
+  enum { PLAY, PAUSE } control;
+  std::mutex mutex;
+  std::condition_variable cv;
 };
