@@ -20,6 +20,9 @@ message(STATUS "ALSA_LIBRARIES: ${ALSA_LIBRARIES}")
 
 find_package(FLEX REQUIRED)
 
+# use pthread
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Werror")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wno-unused-parameter -Wno-attributes")

@@ -15,3 +15,10 @@ target_link_libraries(
   PRIVATE
   ${ALSA_LIBRARIES}
 )
+
+# use pthread
+target_link_libraries(
+  ALSAInterface
+  PRIVATE
+  Threads::Threads
+)
