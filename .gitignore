@@ -35,3 +35,4 @@ build/
 crossbuild/
 .cache/
 .vscode/
+local/

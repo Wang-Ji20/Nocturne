@@ -1,1 +1,2 @@
 add_subdirectory(tty_printer)
+add_subdirectory(naive_player)

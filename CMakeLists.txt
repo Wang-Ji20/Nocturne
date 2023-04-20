@@ -10,6 +10,14 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
         set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
+find_package(ALSA REQUIRED)
+
+if (NOT ALSA_FOUND)
+        message(FATAL_ERROR "ALSA not found")
+endif()
+
+message(STATUS "ALSA_LIBRARIES: ${ALSA_LIBRARIES}")
+
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Werror")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wno-unused-parameter -Wno-attributes")

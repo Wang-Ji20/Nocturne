@@ -2,12 +2,12 @@
 // identification: lib/WAVDecoder/Decoder.cc
 
 #include "WAVDecoder/Decoder.hh"
-#include <fcntl.h>
 #include <cstring>
+#include <fcntl.h>
 #include <stdexcept>
 
 // sanity check
-static void wavChecker(const WAVHeader& header) {
+static void wavChecker(const WAVHeader &header) {
   // do some sanity checks like FFmpeg does
   if (strncmp(header.riff, "RIFF", 4) != 0) {
     throw std::runtime_error("Not a RIFF file");
@@ -20,7 +20,52 @@ static void wavChecker(const WAVHeader& header) {
   }
 }
 
-Decoder::Decoder(const char* filename) {
+
+static void seekDataSection(int fd) {
+  // automaton
+  // 0: d
+  // 1: da
+  // 2: dat
+  // 3: data, return
+  // read one byte at a time
+  // if we see "data", return
+  enum { INIT, D, DA, DAT } automaton = INIT;
+
+  char c;
+  while (read(fd, &c, 1) == 1) {
+    switch (automaton) {
+    case INIT:
+      if (c == 'd') {
+        automaton = D;
+      }
+      break;
+    case D:
+      if (c == 'a') {
+        automaton = DA;
+      } else {
+        automaton = INIT;
+      }
+      break;
+    case DA:
+      if (c == 't') {
+        automaton = DAT;
+      } else {
+        automaton = INIT;
+      }
+      break;
+    case DAT:
+      if (c == 'a') {
+        return;
+      } else {
+        automaton = INIT;
+      }
+      break;
+    }
+  }
+  throw std::runtime_error("UNREACHABLE: Failed to find data section");
+}
+
+Decoder::Decoder(const char *filename) {
   fd = open(filename, O_RDONLY);
   if (fd == -1) {
     throw std::runtime_error(strerror(fd));
@@ -29,4 +74,9 @@ Decoder::Decoder(const char* filename) {
     throw std::runtime_error("Failed to read WAV header");
   }
   wavChecker(header);
+  seekDataSection(fd);
+}
+
+int Decoder::getData(char *buffer, int size) {
+  return read(fd, buffer, size);
 }
