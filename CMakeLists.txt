@@ -18,6 +18,8 @@ endif()
 
 message(STATUS "ALSA_LIBRARIES: ${ALSA_LIBRARIES}")
 
+find_package(FLEX REQUIRED)
+
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Werror")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wno-unused-parameter -Wno-attributes")

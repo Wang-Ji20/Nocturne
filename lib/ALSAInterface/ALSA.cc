@@ -97,12 +97,19 @@ ALSA::ALSA(Decoder &decoder) : decoder(decoder) {
 
   buffer = new char[size];
 
+  // music player control unit
+  snd_mixer_open(&mixer, 0);
+  snd_mixer_attach(mixer, "default");
+  snd_mixer_selem_register(mixer, NULL, NULL);
+  snd_mixer_load(mixer);
+
   playThread = std::make_unique<std::thread>(&ALSA::playLoop, this);
 }
 
 ALSA::~ALSA() {
   snd_pcm_drain(handle);
   snd_pcm_close(handle);
+  snd_mixer_close(mixer);
   delete[] buffer;
 }
 
@@ -115,7 +122,7 @@ void ALSA::playLoop() {
       lock.unlock();
 
     if (snd_pcm_writei(handle, buffer, frames) == -EPIPE) {
-      fprintf(stderr, "underrun occurred\n");
+      // fprintf(stderr, "underrun occurred\n");
       snd_pcm_prepare(handle);
     } else if (rc < 0) {
       fprintf(stderr, "error from writei: %s\n", snd_strerror(rc));
@@ -138,4 +145,22 @@ void ALSA::pause() {
     control = PAUSE;
   }
   cv.notify_one();
+}
+
+void ALSA::setVolume(int volume) {
+  snd_mixer_elem_t *elem = snd_mixer_first_elem(mixer);
+  while (elem != NULL) {
+    if (snd_mixer_elem_get_type(elem) == SND_MIXER_ELEM_SIMPLE &&
+        snd_mixer_selem_is_active(elem)) {
+      const char *name = snd_mixer_selem_get_name(elem);
+      if (strcmp(name, "Master") == 0) {
+        break;
+      }
+    }
+    elem = snd_mixer_elem_next(elem);
+  }
+  long min, max, vol;
+  snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
+  vol = (long)(max * volume / 100.0f); // volume 是介于 0 和 1 之间的浮点数
+  snd_mixer_selem_set_playback_volume_all(elem, vol);
 }
