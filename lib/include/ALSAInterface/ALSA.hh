@@ -14,7 +14,7 @@
 
 class ALSA {
 public:
-  ALSA(Decoder &decoder);
+  ALSA(Decoder &decoder, bool naive = false, snd_pcm_uframes_t frames = 32);
   ~ALSA();
 
   ALSA(const ALSA &) = delete;
@@ -22,6 +22,7 @@ public:
   ALSA &operator=(const ALSA &) = delete;
   ALSA &operator=(ALSA &&) = delete;
 
+  void naivePlay();
   void play();
   void pause();
   void setVolume(int volume);

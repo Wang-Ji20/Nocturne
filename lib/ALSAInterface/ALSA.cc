@@ -19,7 +19,7 @@ static void checksnd(int rc, const char *msg) {
   }
 }
 
-ALSA::ALSA(Decoder &decoder) : decoder(decoder) {
+ALSA::ALSA(Decoder &decoder, bool naive, snd_pcm_uframes_t frames) : frames(frames), decoder(decoder) {
   /* Open PCM device for playback. */
   checksnd(rc = snd_pcm_open(&handle, "default", SND_PCM_STREAM_PLAYBACK, 0),
            "snd_pcm_open");
@@ -80,8 +80,6 @@ ALSA::ALSA(Decoder &decoder) : decoder(decoder) {
   checksnd(snd_pcm_hw_params_set_channels(handle, params, wavHeader.channels),
            "snd_pcm_hw_params_set_channels");
 
-  /* Set period size to 32 frames. */
-  frames = 32;
   checksnd(
       snd_pcm_hw_params_set_period_size_near(handle, params, &frames, &dir),
       "snd_pcm_hw_params_set_period_size_near");
@@ -103,7 +101,7 @@ ALSA::ALSA(Decoder &decoder) : decoder(decoder) {
   snd_mixer_selem_register(mixer, NULL, NULL);
   snd_mixer_load(mixer);
 
-  playThread = std::make_unique<std::thread>(&ALSA::playLoop, this);
+  if(!naive) playThread = std::make_unique<std::thread>(&ALSA::playLoop, this);
 }
 
 ALSA::~ALSA() {
@@ -131,7 +129,21 @@ void ALSA::playLoop() {
   }
 }
 
-void ALSA::play() {
+void ALSA::naivePlay()
+{
+  while (decoder.getData(buffer, size)) {
+    if (snd_pcm_writei(handle, buffer, frames) == -EPIPE) {
+      // fprintf(stderr, "underrun occurred\n");
+      snd_pcm_prepare(handle);
+    } else if (rc < 0) {
+      fprintf(stderr, "error from writei: %s\n", snd_strerror(rc));
+      throw std::runtime_error("error from writei");
+    }
+  }
+}
+
+void ALSA::play()
+{
   {
     std::scoped_lock<std::mutex> lock(mutex);
     control = PLAY;
