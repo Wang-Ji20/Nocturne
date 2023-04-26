@@ -21,7 +21,7 @@ static void wavChecker(const WAVHeader &header) {
 }
 
 
-static int seekDataSection(int fd) {
+static int seekDataSection(std::fstream &file) {
   // automaton
   // 0: d
   // 1: da
@@ -32,7 +32,7 @@ static int seekDataSection(int fd) {
   enum { INIT, D, DA, DAT } automaton = INIT;
 
   char c;
-  while (read(fd, &c, 1) == 1) {
+  while (file.get(c)) {
     switch (automaton) {
     case INIT:
       if (c == 'd') {
@@ -55,7 +55,7 @@ static int seekDataSection(int fd) {
       break;
     case DAT:
       if (c == 'a') {
-        return lseek(fd, 0, SEEK_CUR);
+        return file.tellg();
       } else {
         automaton = INIT;
       }
@@ -66,17 +66,21 @@ static int seekDataSection(int fd) {
 }
 
 Decoder::Decoder(const char *filename) {
-  fd = open(filename, O_RDONLY);
-  if (fd == -1) {
-    throw std::runtime_error(strerror(fd));
+  file.open(filename, std::ios::in | std::ios::binary);
+  if (!file.is_open()) {
+    file.clear();
+    throw std::runtime_error("Failed to open WAV file");
   }
-  if (read(fd, &header, sizeof(WAVHeader)) != sizeof(WAVHeader)) {
+  file.read((char*)&header, sizeof(WAVHeader));
+  if (file.bad() || file.gcount() != sizeof(WAVHeader)) {
+    file.clear();
     throw std::runtime_error("Failed to read WAV header");
   }
   wavChecker(header);
-  data_offset = seekDataSection(fd);
+  data_offset = seekDataSection(file);
 }
 
 int Decoder::getData(char *buffer, int size) {
-  return read(fd, buffer, size);
+  file.read(buffer, size);
+  return file.gcount();
 }

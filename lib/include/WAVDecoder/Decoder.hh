@@ -5,6 +5,7 @@
 #pragma once
 #include <string>
 #include <unistd.h>
+#include <fstream>
 
 struct WAVHeader {
   char riff[4];          // "RIFF"
@@ -29,13 +30,13 @@ public:
   Decoder &operator=(const Decoder &) = delete;
   Decoder &operator=(Decoder &&) = delete;
 
-  ~Decoder() { close(fd); };
+  ~Decoder() { file.close(); };
   const WAVHeader &getHeader() const { return header; };
 
   int getData(char *buffer, int size);
 
 private:
   WAVHeader header{};
-  int fd{};
+  std::fstream file{};
   size_t data_offset{0};
 };

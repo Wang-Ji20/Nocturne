@@ -14,6 +14,6 @@ int main(int argc, char **argv) {
   }
 
   Decoder decoder(argv[1]);
-  ALSA alsa(decoder, true);
+  ALSA alsa(decoder, true, 512);
   alsa.naivePlay();
 }
