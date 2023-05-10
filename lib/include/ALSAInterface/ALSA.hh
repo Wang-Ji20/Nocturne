@@ -23,8 +23,6 @@ public:
   ALSA &operator=(ALSA &&) = delete;
 
   void naivePlay();
-  void play();
-  void pause();
   void setVolume(int volume);
 
 private:
@@ -41,7 +39,4 @@ private:
   Decoder &decoder;
 
   std::unique_ptr<std::thread> playThread;
-  enum { PLAY, PAUSE } control;
-  std::mutex mutex;
-  std::condition_variable cv;
 };

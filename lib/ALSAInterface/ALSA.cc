@@ -112,30 +112,13 @@ ALSA::~ALSA() {
 }
 
 void ALSA::playLoop() {
-  bool hasData = true;
-  int loopCounter;
-  while (hasData) {
-    std::unique_lock<std::mutex> lock(mutex);
-    if (control == PAUSE)
-      cv.wait(lock, [this] { return control == PLAY; });
-    else
-      lock.unlock();
-
-    loopCounter = 0;
-    while(loopCounter < 256 && (hasData = decoder.getData(buffer, size))) {
-      loopCounter++;
-      if (snd_pcm_writei(handle, buffer, frames) == -EPIPE) {
-        fprintf(stderr, "underrun occurred\n");
-        int code = snd_pcm_prepare(handle);
-        if(code < 0) {
-          fprintf(stderr, "prepare failed, code is %d\n", code);
-        } else {
-          fprintf(stderr, "prepared\n");
-        }
-      } else if (rc < 0) {
-        fprintf(stderr, "error from writei: %s\n", snd_strerror(rc));
-        throw std::runtime_error("error from writei");
-      }
+  while (decoder.getData(buffer, size)) {
+    if (snd_pcm_writei(handle, buffer, frames) == -EPIPE) {
+      fprintf(stderr, "underrun occurred\n");
+      snd_pcm_prepare(handle);
+    } else if (rc < 0) {
+      fprintf(stderr, "error from writei: %s\n", snd_strerror(rc));
+      throw std::runtime_error("error from writei");
     }
   }
 }
@@ -153,23 +136,6 @@ void ALSA::naivePlay()
   }
 }
 
-void ALSA::play()
-{
-  {
-    std::scoped_lock<std::mutex> lock(mutex);
-    control = PLAY;
-  }
-  cv.notify_one();
-}
-
-void ALSA::pause() {
-  {
-    std::scoped_lock<std::mutex> lock(mutex);
-    control = PAUSE;
-  }
-  cv.notify_one();
-}
-
 void ALSA::setVolume(int volume) {
   snd_mixer_elem_t *elem = snd_mixer_first_elem(mixer);
   while (elem != NULL) {
@@ -177,13 +143,17 @@ void ALSA::setVolume(int volume) {
         snd_mixer_selem_is_active(elem)) {
       const char *name = snd_mixer_selem_get_name(elem);
       if (strcmp(name, "Master") == 0) {
+        printf("gg\n");
         break;
+      } else {
+        printf("%s\n", name);
       }
     }
     elem = snd_mixer_elem_next(elem);
   }
-  long min, max, vol;
-  snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
+  long min = 0, max = 512, vol;
+  // snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
   vol = (long)(max * volume / 100.0f); // volume 是介于 0 和 1 之间的浮点数
+  printf("min: %ld, max: %ld, vol: %ld\n", min, max, vol);
   snd_mixer_selem_set_playback_volume_all(elem, vol);
 }

@@ -41,8 +41,7 @@ int main(int argc, char **argv) {
 
   launch();
   Decoder decoder(argv[1]);
-  ALSA alsa(decoder, false, 32);
-  alsa.play();
+  ALSA alsa(decoder, false, 64);
 
   while (prompt(), std::cin) {
     Lexer lexer(&std::cin);
@@ -52,10 +51,8 @@ int main(int argc, char **argv) {
       alsa.setVolume(std::any_cast<long>(lexer.getValue()));
       break;
     case Token::PAUSE:
-      alsa.pause();
       break;
     case Token::PLAY:
-      alsa.play();
       break;
     case Token::QUIT:
       return 0;
