@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
 
   launch();
   Decoder decoder(argv[1]);
-  ALSA alsa(decoder, false, 512);
+  ALSA alsa(decoder, false, 32);
   alsa.play();
 
   while (prompt(), std::cin) {

@@ -112,19 +112,30 @@ ALSA::~ALSA() {
 }
 
 void ALSA::playLoop() {
-  while (decoder.getData(buffer, size)) {
+  bool hasData = true;
+  int loopCounter;
+  while (hasData) {
     std::unique_lock<std::mutex> lock(mutex);
     if (control == PAUSE)
       cv.wait(lock, [this] { return control == PLAY; });
     else
       lock.unlock();
 
-    if (snd_pcm_writei(handle, buffer, frames) == -EPIPE) {
-      // fprintf(stderr, "underrun occurred\n");
-      snd_pcm_prepare(handle);
-    } else if (rc < 0) {
-      fprintf(stderr, "error from writei: %s\n", snd_strerror(rc));
-      throw std::runtime_error("error from writei");
+    loopCounter = 0;
+    while(loopCounter < 256 && (hasData = decoder.getData(buffer, size))) {
+      loopCounter++;
+      if (snd_pcm_writei(handle, buffer, frames) == -EPIPE) {
+        fprintf(stderr, "underrun occurred\n");
+        int code = snd_pcm_prepare(handle);
+        if(code < 0) {
+          fprintf(stderr, "prepare failed, code is %d\n", code);
+        } else {
+          fprintf(stderr, "prepared\n");
+        }
+      } else if (rc < 0) {
+        fprintf(stderr, "error from writei: %s\n", snd_strerror(rc));
+        throw std::runtime_error("error from writei");
+      }
     }
   }
 }
