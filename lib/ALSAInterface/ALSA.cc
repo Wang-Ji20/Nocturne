@@ -102,6 +102,10 @@ ALSA::ALSA(Decoder &decoder, bool naive, snd_pcm_uframes_t frames)
   snd_mixer_selem_register(mixer, NULL, NULL);
   snd_mixer_load(mixer);
 
+  fprintf(stderr, "playing this %d Hz %d channels %d bits_per_sample audio\n",
+          sample_rate, channels, bitsPerSample);
+  fprintf(stderr, "buffer size is %d, period size is %zu\n", size, frames);
+
   if (!naive)
     playThread = std::make_unique<std::thread>(&ALSA::playLoop, this);
 }
@@ -188,6 +192,6 @@ void ALSA::setVolume(int volume) {
   }
   long min, max, vol;
   snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
-  vol = (long)(max * volume / 100.0f); // volume 是介于 0 和 1 之间的浮点数
+  vol = (long)(max * volume / 100.0f); // volume is a float between 0 and 1
   snd_mixer_selem_set_playback_volume_all(elem, vol);
 }
