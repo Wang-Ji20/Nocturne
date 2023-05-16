@@ -192,8 +192,7 @@ void ALSA::setVolume(int volume) {
     }
     elem = snd_mixer_elem_next(elem);
   }
-  long min, max, vol;
-  snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
+  long max = 512, vol;
   vol = (long)(max * volume / 100.0f); // volume is a float between 0 and 1
   snd_mixer_selem_set_playback_volume_all(elem, vol);
 }
