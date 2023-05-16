@@ -1,7 +1,7 @@
 // Nocturne 2023
 // identification: lib/WAVDecoder/Decoder.cc
 
-#include "WAVDecoder/Decoder.hh"
+#include "Decoder/WAVDecoder.hh"
 #include <cstring>
 #include <fcntl.h>
 #include <stdexcept>
@@ -19,7 +19,6 @@ static void wavChecker(const WAVHeader &header) {
     throw std::runtime_error("Not a fmt file");
   }
 }
-
 
 static int seekDataSection(std::fstream &file) {
   // automaton
@@ -65,22 +64,28 @@ static int seekDataSection(std::fstream &file) {
   throw std::runtime_error("UNREACHABLE: Failed to find data section");
 }
 
-Decoder::Decoder(const char *filename) {
-  file.open(filename, std::ios::in | std::ios::binary);
+WAVDecoder::WAVDecoder(std::string_view filename) {
+  file.open(filename.data(), std::ios::in | std::ios::binary);
   if (!file.is_open()) {
     file.clear();
     throw std::runtime_error("Failed to open WAV file");
   }
-  file.read((char*)&header, sizeof(WAVHeader));
+  file.read((char *)&header, sizeof(WAVHeader));
   if (file.bad() || file.gcount() != sizeof(WAVHeader)) {
     file.clear();
     throw std::runtime_error("Failed to read WAV header");
   }
   wavChecker(header);
+  alsaHeader = ALSAHeader{
+      .sample_rate = header.sample_rate,
+      .channels = header.channels,
+      .bits_per_sample = header.bits_per_sample,
+  };
   data_offset = seekDataSection(file);
 }
 
-int Decoder::getData(char *buffer, int size) {
+[[nodiscard("you should always check if the audio file ends")]] auto
+WAVDecoder::getData(char *buffer, int size) -> int {
   file.read(buffer, size);
   return file.gcount();
 }

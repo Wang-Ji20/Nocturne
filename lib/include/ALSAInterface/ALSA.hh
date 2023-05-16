@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "WAVDecoder/Decoder.hh"
+#include "Decoder/Decoder.hh"
 
 #include <alsa/asoundlib.h>
 #include <condition_variable>
@@ -35,7 +35,6 @@ private:
   snd_mixer_t *mixer;
   snd_pcm_uframes_t frames;
   int dir;
-  int rc;
   int size;
   char *buffer;
   Decoder &decoder;

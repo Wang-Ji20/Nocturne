@@ -1,11 +1,5 @@
-// Nocturne 2023
-// identification: lib/include/WAVDecoder/Decoder.hh
-//
-
 #pragma once
-#include <string>
-#include <unistd.h>
-#include <fstream>
+#include "Decoder/Decoder.hh"
 
 struct WAVHeader {
   char riff[4];          // "RIFF"
@@ -21,22 +15,12 @@ struct WAVHeader {
   unsigned short bits_per_sample;
 } __attribute__((packed));
 
-class Decoder {
+class WAVDecoder : public Decoder {
 public:
-  Decoder(const char *filename);
-
-  Decoder(const Decoder &) = delete;
-  Decoder(Decoder &&) = delete;
-  Decoder &operator=(const Decoder &) = delete;
-  Decoder &operator=(Decoder &&) = delete;
-
-  ~Decoder() { file.close(); };
-  const WAVHeader &getHeader() const { return header; };
-
-  int getData(char *buffer, int size);
+  WAVDecoder(std::string_view filename);
+  int getData(char *buffer, int size) override;
+  const WAVHeader &getWAVHeader() const noexcept { return header; }
 
 private:
   WAVHeader header{};
-  std::fstream file{};
-  size_t data_offset{0};
 };

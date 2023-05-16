@@ -2,6 +2,7 @@
 // identification: tools/naive_player/main.cc
 
 #include "ALSAInterface/ALSA.hh"
+#include "Decoder/WAVDecoder.hh"
 #include "nlexer.hpp"
 #include "utils/color.hh"
 
@@ -40,7 +41,7 @@ int main(int argc, char **argv) {
   }
 
   launch();
-  Decoder decoder(argv[1]);
+  WAVDecoder decoder(argv[1]);
   ALSA alsa(decoder, false, 32);
   alsa.play();
 

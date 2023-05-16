@@ -1,10 +1,10 @@
-add_subdirectory(WAVDecoder)
+add_subdirectory(Decoder)
 add_subdirectory(ALSAInterface)
 
 add_library(nocturne STATIC ${ALL_OBJECT_FILES})
 
 set(NOCTURNE_LIBS
-  WAVDecoder
+  Decoder
   ALSAInterface
 )
 

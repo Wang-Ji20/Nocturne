@@ -1,15 +1,17 @@
 // Nocturne 2023
 // Identification: tools/tty_printer/main.cc
 
-#include "WAVDecoder/Decoder.hh"
+#include "Decoder/WAVDecoder.hh"
 #include <cstring>
-#include <string>
-#include <iostream>
 #include <fcntl.h>
+#include <iostream>
+#include <string>
+#include <unistd.h>
 
 // return the string representation of a WAVHeader
-std::string headerToString(const WAVHeader& header) {
-  std::string str = "Header Length: " + std::to_string(sizeof(WAVHeader)) + "\n";
+std::string headerToString(const WAVHeader &header) {
+  std::string str =
+      "Header Length: " + std::to_string(sizeof(WAVHeader)) + "\n";
   str += "RIFF: " + std::string(header.riff, 4) + "\n";
   str += "Size: " + std::to_string(header.size) + "\n";
   str += "WAVE: " + std::string(header.wave, 4) + "\n";
@@ -24,7 +26,7 @@ std::string headerToString(const WAVHeader& header) {
   return str;
 }
 
-void writeToFile(const char* filename, const std::string& content) {
+void writeToFile(const char *filename, const std::string &content) {
   int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
   if (fd == -1) {
     throw std::runtime_error(strerror(errno));
@@ -35,17 +37,17 @@ void writeToFile(const char* filename, const std::string& content) {
   close(fd);
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   if (argc != 2) {
     std::cerr << "Usage: " << argv[0] << " <wav file>" << std::endl;
     return 1;
   }
   try {
-    Decoder decoder(argv[1]);
-    std::string str = headerToString(decoder.getHeader());
+    WAVDecoder decoder(argv[1]);
+    std::string str = headerToString(decoder.getWAVHeader());
     std::cout << str;
     writeToFile("wav_header.txt", str);
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << std::endl;
     return 1;
   }
