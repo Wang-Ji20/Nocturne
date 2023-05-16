@@ -26,7 +26,7 @@ ALSA::ALSA(Decoder &decoder, bool naive, snd_pcm_uframes_t frames)
            "snd_pcm_open");
 
   /* Allocate a hardware parameters object. */
-  checksnd(snd_pcm_hw_params_malloc(&params), "snd_pcm_hw_params_malloc");
+  snd_pcm_hw_params_alloca(&params);
 
   /* Fill it in with default values. */
   checksnd(snd_pcm_hw_params_any(handle, params), "snd_pcm_hw_params_any");
@@ -104,7 +104,7 @@ ALSA::ALSA(Decoder &decoder, bool naive, snd_pcm_uframes_t frames)
 
   fprintf(stderr, "playing this %d Hz %d channels %d bits_per_sample audio\n",
           sample_rate, channels, bitsPerSample);
-  fprintf(stderr, "buffer size is %d, period size is %zu\n", size, frames);
+  fprintf(stderr, "buffer size is %d, period size is %lu\n", size, frames);
 
   if (!naive)
     playThread = std::make_unique<std::thread>(&ALSA::playLoop, this);
@@ -165,6 +165,7 @@ void ALSA::naivePlay() {
 void ALSA::play() {
   {
     std::scoped_lock<std::mutex> lock(mutex);
+    snd_pcm_pause(handle, 0);
     control = PLAY;
   }
   cv.notify_one();
@@ -173,6 +174,7 @@ void ALSA::play() {
 void ALSA::pause() {
   {
     std::scoped_lock<std::mutex> lock(mutex);
+    snd_pcm_pause(handle, 1);
     control = PAUSE;
   }
   cv.notify_one();

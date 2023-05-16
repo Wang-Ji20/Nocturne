@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 
   launch();
   WAVDecoder decoder(argv[1]);
-  ALSA alsa(decoder, false, 32);
+  ALSA alsa(decoder, false, 5512);
   alsa.play();
 
   while (prompt(), std::cin) {

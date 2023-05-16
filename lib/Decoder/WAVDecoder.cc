@@ -84,7 +84,7 @@ WAVDecoder::WAVDecoder(std::string_view filename) {
   data_offset = seekDataSection(file);
 }
 
-[[nodiscard("you should always check if the audio file ends")]] auto
+[[nodiscard]] auto
 WAVDecoder::getData(char *buffer, int size) -> int {
   file.read(buffer, size);
   return file.gcount();

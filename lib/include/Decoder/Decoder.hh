@@ -24,7 +24,7 @@ public:
   ~Decoder() { file.close(); }
   const ALSAHeader &getHeader() const noexcept { return alsaHeader; }
 
-  [[nodiscard("you should always check if the audio file ends")]] virtual int
+  [[nodiscard]] virtual int
   getData(char *buffer, int size) = 0;
 
 protected:
