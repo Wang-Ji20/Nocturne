@@ -14,7 +14,8 @@
 
 class ALSA {
 public:
-  ALSA(Decoder &decoder, bool naive = false, snd_pcm_uframes_t frames = 32);
+  // TODO: this magic number 5512 sucks, but I cannot fix it.
+  ALSA(Decoder &decoder, bool naive = false, snd_pcm_uframes_t frames = 5512);
   ~ALSA();
 
   ALSA(const ALSA &) = delete;

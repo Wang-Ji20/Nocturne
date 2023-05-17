@@ -2,6 +2,7 @@ add_library(
   Decoder
   OBJECT
   WAVDecoder.cc
+  FLACDecoder.cc
 )
 
 set(

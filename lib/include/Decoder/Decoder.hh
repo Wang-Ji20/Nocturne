@@ -21,7 +21,7 @@ public:
   Decoder &operator=(const Decoder &) = delete;
   Decoder &operator=(Decoder &&) = delete;
 
-  ~Decoder() { file.close(); }
+  virtual ~Decoder() { file.close(); }
   const ALSAHeader &getHeader() const noexcept { return alsaHeader; }
 
   [[nodiscard]] virtual int

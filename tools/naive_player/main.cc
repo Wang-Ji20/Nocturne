@@ -3,11 +3,15 @@
 
 #include "ALSAInterface/ALSA.hh"
 #include "Decoder/WAVDecoder.hh"
+#include "Decoder/FLACDecoder.hh"
 #include "nlexer.hpp"
 #include "utils/color.hh"
 
 #include <iostream>
 #include <thread>
+#include <memory>
+
+using DecoderRef = std::unique_ptr<Decoder>;
 
 void usage() { std::cerr << "Usage: naive_player <wav file>" << std::endl; }
 
@@ -34,6 +38,19 @@ void prompt() {
   fflush(stdout);
 }
 
+DecoderRef getDecoder(char* filename) {
+  std::string_view s(filename);
+  // ends with wav
+  if (s.size() >= 4 && s.substr(s.size() - 4) == ".wav") {
+    return std::make_unique<WAVDecoder>(s);
+  }
+  // ends with flac
+  if (s.size() >= 5 && s.substr(s.size() - 5) == ".flac") {
+    return std::make_unique<FLACDecoder>(s);
+  }
+  throw std::runtime_error("Unknown file format");
+}
+
 int main(int argc, char **argv) {
   if (argc != 2) {
     usage();
@@ -41,8 +58,9 @@ int main(int argc, char **argv) {
   }
 
   launch();
-  WAVDecoder decoder(argv[1]);
-  ALSA alsa(decoder, false, 5512);
+
+  DecoderRef decoder = getDecoder(argv[1]);
+  ALSA alsa(*decoder, false, 5512);
   alsa.play();
 
   while (prompt(), std::cin) {
