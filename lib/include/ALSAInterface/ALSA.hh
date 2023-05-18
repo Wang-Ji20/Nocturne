@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "Decoder/Decoder.hh"
+#include "Decoder/abstractDecoder.hh"
 
 #include <alsa/asoundlib.h>
 #include <condition_variable>
@@ -15,7 +15,8 @@
 class ALSA {
 public:
   // TODO: this magic number 5512 sucks, but I cannot fix it.
-  ALSA(Decoder &decoder, bool naive = false, snd_pcm_uframes_t frames = 5512);
+  ALSA(AbstractDecoder &decoder, bool naive = false,
+       snd_pcm_uframes_t frames = 5512);
   ~ALSA();
 
   ALSA(const ALSA &) = delete;
@@ -38,7 +39,7 @@ private:
   int dir;
   int size;
   char *buffer;
-  Decoder &decoder;
+  AbstractDecoder &decoder;
 
   std::unique_ptr<std::thread> playThread;
   enum { PLAY, PAUSE } control;

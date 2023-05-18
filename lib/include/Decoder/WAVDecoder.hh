@@ -1,5 +1,5 @@
 #pragma once
-#include "Decoder/Decoder.hh"
+#include "Decoder/abstractDecoder.hh"
 
 struct WAVHeader {
   char riff[4];          // "RIFF"
@@ -15,12 +15,14 @@ struct WAVHeader {
   unsigned short bits_per_sample;
 } __attribute__((packed));
 
-class WAVDecoder : public Decoder {
+class WAVDecoder : public AbstractDecoder {
 public:
   WAVDecoder(std::string_view filename);
   int getData(char *buffer, int size) override;
   const WAVHeader &getWAVHeader() const noexcept { return header; }
+  ~WAVDecoder() { file.close(); }
 
 private:
   WAVHeader header{};
+  std::fstream file;
 };

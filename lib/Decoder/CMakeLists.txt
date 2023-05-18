@@ -3,6 +3,7 @@ add_library(
   OBJECT
   WAVDecoder.cc
   FLACDecoder.cc
+  RawStream.cc
 )
 
 set(

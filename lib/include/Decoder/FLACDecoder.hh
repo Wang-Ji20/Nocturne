@@ -1,6 +1,9 @@
 // TODO(maybe never): I gave up.
 #pragma once
-#include "Decoder/Decoder.hh"
+#include "Decoder/abstractDecoder.hh"
+#include "Decoder/RawStream.hh"
+
+using RawStreamRef = std::unique_ptr<RawStream>;
 
 struct FLACHeader {
   char magic[4]; // "fLaC"
@@ -37,13 +40,15 @@ struct FLACSTREAMHeader {
   char md5[16];
 };
 
-class FLACDecoder : public Decoder {
+class FLACDecoder : public AbstractDecoder {
 public:
   FLACDecoder(std::string_view filename);
   int getData(char *buffer, int size) override;
-  const FLACHeader &getFLACHeader() const noexcept { return header; }
+  const FLACHeader &getFLACHeader() const noexcept { return header_; }
+  ~FLACDecoder() {}
 
 private:
-    FLACHeader header{};
-    FLACSTREAMHeader streamHeader{};
+  FLACHeader header_{};
+  FLACSTREAMHeader streamHeader_{};
+  RawStreamRef file_;
 };

@@ -19,7 +19,7 @@ static void checksnd(int rc, const char *msg) {
   }
 }
 
-ALSA::ALSA(Decoder &decoder, bool naive, snd_pcm_uframes_t frames)
+ALSA::ALSA(AbstractDecoder &decoder, bool naive, snd_pcm_uframes_t frames)
     : frames(frames), decoder(decoder) {
   /* Open PCM device for playback. */
   checksnd(snd_pcm_open(&handle, "default", SND_PCM_STREAM_PLAYBACK, 0),

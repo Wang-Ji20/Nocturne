@@ -2,16 +2,16 @@
 // identification: tools/naive_player/main.cc
 
 #include "ALSAInterface/ALSA.hh"
-#include "Decoder/WAVDecoder.hh"
 #include "Decoder/FLACDecoder.hh"
+#include "Decoder/WAVDecoder.hh"
 #include "nlexer.hpp"
 #include "utils/color.hh"
 
 #include <iostream>
-#include <thread>
 #include <memory>
+#include <thread>
 
-using DecoderRef = std::unique_ptr<Decoder>;
+using DecoderRef = std::unique_ptr<AbstractDecoder>;
 
 void usage() { std::cerr << "Usage: naive_player <wav file>" << std::endl; }
 
@@ -38,7 +38,7 @@ void prompt() {
   fflush(stdout);
 }
 
-DecoderRef getDecoder(char* filename) {
+DecoderRef getDecoder(char *filename) {
   std::string_view s(filename);
   // ends with wav
   if (s.size() >= 4 && s.substr(s.size() - 4) == ".wav") {

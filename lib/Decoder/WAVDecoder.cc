@@ -81,11 +81,10 @@ WAVDecoder::WAVDecoder(std::string_view filename) {
       .channels = header.channels,
       .bits_per_sample = header.bits_per_sample,
   };
-  data_offset = seekDataSection(file);
+  seekDataSection(file);
 }
 
-[[nodiscard]] auto
-WAVDecoder::getData(char *buffer, int size) -> int {
+[[nodiscard]] auto WAVDecoder::getData(char *buffer, int size) -> int {
   file.read(buffer, size);
   return file.gcount();
 }
