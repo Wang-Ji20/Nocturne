@@ -4,6 +4,7 @@ project(Nocturne LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/build_support/cmake)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
         message(STATUS "Setting build type to `Debug` as none was specified.")
@@ -20,6 +21,8 @@ message(STATUS "ALSA_LIBRARIES: ${ALSA_LIBRARIES}")
 
 find_package(FLEX REQUIRED)
 
+find_package(FFmpeg COMPONENTS AVCODEC REQUIRED)
+
 # use pthread
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -33,7 +36,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(NOCTURNE_SRC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/lib/include)
 
-include_directories(${NOCTURNE_SRC_INCLUDE_DIR})
+include_directories(${NOCTURNE_SRC_INCLUDE_DIR} ${FFMPEG_INCLUDE_DIRS})
 
 add_subdirectory(lib)
 add_subdirectory(tools)
