@@ -7,7 +7,7 @@ using RawStreamRef = std::unique_ptr<RawStream>;
 
 struct FLACHeader {
   char magic[4]; // "fLaC"
-} __attribute__((packed));
+};
 
 struct FLACMetadataBlockHeader {
   enum {
@@ -24,20 +24,36 @@ struct FLACMetadataBlockHeader {
     PICTURE = 6,
     INVALID = 127,
   } block_type;
-  unsigned int length;
+  u32 length;
 };
 
 // we don't care about other blocks
 struct FLACSTREAMHeader {
-  unsigned int minimum_block_size;
-  unsigned int maximum_block_size;
-  unsigned int minimum_frame_size;
-  unsigned int maximum_frame_size;
-  unsigned int sample_rate;
-  unsigned int channels;
-  unsigned int bits_per_sample;
+  u32 minimum_block_size;
+  u32 maximum_block_size;
+  u32 minimum_frame_size;
+  u32 maximum_frame_size;
+  u32 sample_rate;
+  u32 channels;
+  u32 bits_per_sample;
   unsigned long long total_samples;
   char md5[16];
+};
+
+struct FLACFrameHeader {
+  enum {
+    FIXED_BLOCK_SIZE = 0,
+    VARIABLE_BLOCK_SIZE = 1,
+  } block_size_strategy;
+  u32 block_size;
+  u32 sample_rate;
+  u32 channel_assignment;
+  u32 sample_size;
+  union{
+    u32 sample_number; // for variable block size
+    u32 frame_number; // for fixed block size
+  };
+  u32 crc8;
 };
 
 class FLACDecoder : public AbstractDecoder {
