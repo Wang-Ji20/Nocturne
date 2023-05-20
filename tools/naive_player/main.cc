@@ -2,7 +2,7 @@
 // identification: tools/naive_player/main.cc
 
 #include "ALSAInterface/ALSA.hh"
-#include "Decoder/FLACDecoder.hh"
+#include "Decoder/FFDecoder.hh"
 #include "Decoder/WAVDecoder.hh"
 #include "nlexer.hpp"
 #include "utils/color.hh"
@@ -44,11 +44,8 @@ DecoderRef getDecoder(char *filename) {
   if (s.size() >= 4 && s.substr(s.size() - 4) == ".wav") {
     return std::make_unique<WAVDecoder>(s);
   }
-  // ends with flac
-  if (s.size() >= 5 && s.substr(s.size() - 5) == ".flac") {
-    return std::make_unique<FLACDecoder>(s);
-  }
-  throw std::runtime_error("Unknown file format");
+  // ends with other format
+  return std::make_unique<FFDecoder>(s);
 }
 
 int main(int argc, char **argv) {

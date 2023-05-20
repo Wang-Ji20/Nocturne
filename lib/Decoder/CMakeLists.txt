@@ -13,4 +13,6 @@ set(
   PARENT_SCOPE
 )
 
-target_link_libraries(Decoder ${FFMPEG_LIBRARIES})
+target_link_libraries(Decoder ${AVUTIL_LIBRARIES})
+target_link_libraries(Decoder ${AVCODEC_LIBRARIES})
+target_link_libraries(Decoder ${AVFORMAT_LIBRARIES})
