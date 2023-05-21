@@ -15,6 +15,7 @@ int main(int argc, char **argv) {
   }
 
   WAVDecoder decoder(argv[1]);
-  ALSA alsa(decoder, true);
+  Debussy debussy(decoder);
+  ALSA alsa(decoder, debussy, true);
   alsa.naivePlay();
 }

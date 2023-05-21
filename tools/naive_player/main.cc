@@ -57,7 +57,8 @@ int main(int argc, char **argv) {
   launch();
 
   DecoderRef decoder = getDecoder(argv[1]);
-  ALSA alsa(*decoder, false);
+  Debussy debussy(*decoder);
+  ALSA alsa(*decoder, debussy, false);
   alsa.play();
 
   while (prompt(), std::cin) {

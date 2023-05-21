@@ -6,12 +6,9 @@ extern "C" {
 
 static snd_pcm_access_t getAccessMethod(AVCodecContext *ctx) {
   AVSampleFormat format = ctx->sample_fmt;
-  if (format == AV_SAMPLE_FMT_FLTP ||
-      format == AV_SAMPLE_FMT_DBLP ||
-      format == AV_SAMPLE_FMT_S32P ||
-      format == AV_SAMPLE_FMT_S16P ||
-      format == AV_SAMPLE_FMT_U8P
-  ) {
+  if (format == AV_SAMPLE_FMT_FLTP || format == AV_SAMPLE_FMT_DBLP ||
+      format == AV_SAMPLE_FMT_S32P || format == AV_SAMPLE_FMT_S16P ||
+      format == AV_SAMPLE_FMT_U8P) {
     return SND_PCM_ACCESS_RW_NONINTERLEAVED;
   }
   return SND_PCM_ACCESS_RW_INTERLEAVED;
@@ -183,6 +180,18 @@ bool FFDecoder::getDataInterleave(char **buffer, int *size,
                                   unsigned long *frames) {
   if (precedeFrame()) {
     *buffer = (char *)frame->data[0];
+    *frames = frame->nb_samples;
+    *size = frame->nb_samples * frame->nb_samples *
+            av_get_bytes_per_sample(codecContext->sample_fmt);
+  } else {
+    return false;
+  }
+  return true;
+}
+
+bool FFDecoder::getDataPlanar(char ***buffers, int *size, unsigned long *frames) {
+  if (precedeFrame()) {
+    *buffers = (char **)frame->data;
     *frames = frame->nb_samples;
     *size = frame->nb_samples * frame->nb_samples *
             av_get_bytes_per_sample(codecContext->sample_fmt);
