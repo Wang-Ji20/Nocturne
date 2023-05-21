@@ -19,10 +19,8 @@ static void checksnd(int rc, const char *msg) {
   }
 }
 
-ALSA::ALSA(AbstractDecoder &decoder, Debussy& debussy, bool naive,
-           snd_pcm_uframes_t frames)
-    : frames{frames}, debussy{debussy}, decoder{decoder},
-      alsaHeader{decoder.getHeader()} {
+ALSA::ALSA(Debussy &debussy)
+    : debussy{debussy}, alsaHeader{debussy.getHeader()} {
 
   /* Open PCM device for playback. */
   checksnd(snd_pcm_open(&handle, "default", SND_PCM_STREAM_PLAYBACK, 0),
@@ -71,18 +69,25 @@ ALSA::ALSA(AbstractDecoder &decoder, Debussy& debussy, bool naive,
   fprintf(stderr, "playing this %d Hz %d channels %d bits_per_sample audio\n",
           sample_rate, alsaHeader.channels, alsaHeader.bits_per_sample);
   fprintf(stderr, "period size is %lu\n", frames);
-
-  if (!naive)
-    playThread = std::make_unique<std::thread>(&ALSA::playLoop, this);
 }
 
 ALSA::~ALSA() {
+  if (patheon) {
+    patheon->join();
+  }
   snd_pcm_drain(handle);
   snd_pcm_close(handle);
   snd_mixer_close(mixer);
 }
 
-void ALSA::playLoop() {
+void ALSA::Lachaise() {
+  if (patheon) {
+    throw std::runtime_error("already playing");
+  }
+  patheon = std::make_unique<std::thread>(&ALSA::CemeteryOfInnocents, this);
+}
+
+void ALSA::CemeteryOfInnocents() {
   do {
     std::unique_lock<std::mutex> lock(mutex);
     if (control == PAUSE)
@@ -116,21 +121,7 @@ bool ALSA::playInterleave() {
   return true;
 }
 
-void ALSA::naivePlay() {
-  int retv = 0;
-  char *buffer = nullptr;
-  while (decoder.getData(buffer, size)) {
-    if ((retv = snd_pcm_writei(handle, buffer, frames)) == -EPIPE) {
-      // fprintf(stderr, "underrun occurred\n");
-      snd_pcm_prepare(handle);
-    } else if (retv < 0) {
-      fprintf(stderr, "error from writei: %s\n", snd_strerror(retv));
-      throw std::runtime_error("error from writei");
-    }
-  }
-}
-
-void ALSA::play() {
+void ALSA::resume() {
   {
     std::scoped_lock<std::mutex> lock(mutex);
     snd_pcm_pause(handle, 0);

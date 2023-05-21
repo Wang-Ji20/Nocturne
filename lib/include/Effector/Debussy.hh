@@ -17,7 +17,7 @@ public:
 
   // for compatibility with ALSA
   [[nodiscard]] bool getData(char **buffer, int *size, size_t *frame);
-  ALSAHeader getHeader() const noexcept { return decoder.getHeader(); }
+  const ALSAHeader& getHeader() const noexcept { return decoder.getHeader(); }
 
 private:
   // the effector that is currently being used as root

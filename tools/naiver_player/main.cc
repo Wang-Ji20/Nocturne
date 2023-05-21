@@ -2,7 +2,7 @@
 // identification: tools/naive_player/main.cc
 
 #include "ALSAInterface/ALSA.hh"
-#include "Decoder/WAVDecoder.hh"
+#include "Decoder/FFDecoder.hh"
 
 #include <iostream>
 
@@ -14,8 +14,8 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  WAVDecoder decoder(argv[1]);
+  FFDecoder decoder(argv[1]);
   Debussy debussy(decoder);
-  ALSA alsa(decoder, debussy, true);
-  alsa.naivePlay();
+  ALSA alsa(debussy);
+  alsa.CemeteryOfInnocents();
 }

@@ -16,8 +16,7 @@
 class ALSA {
 public:
   // TODO: this magic number 5512 sucks, but I cannot fix it.
-  ALSA(AbstractDecoder &decoder, Debussy &debussy, bool naive = false,
-       snd_pcm_uframes_t frames = 5512);
+  ALSA(Debussy &debussy);
   ~ALSA();
 
   ALSA(const ALSA &) = delete;
@@ -25,28 +24,29 @@ public:
   ALSA &operator=(const ALSA &) = delete;
   ALSA &operator=(ALSA &&) = delete;
 
-  void naivePlay();
-  void play();
+  // play the music in a separate thread
+  void Lachaise();
+  void CemeteryOfInnocents();
+
+  void resume();
   void pause();
   void setVolume(int volume);
 
 private:
-  void playLoop();
   bool playInterleave();
 
   snd_pcm_t *handle;
   snd_pcm_hw_params_t *params;
   snd_mixer_t *mixer;
 
-  snd_pcm_uframes_t frames;
+  snd_pcm_uframes_t frames{5512};
   int dir;
   int size;
 
   Debussy &debussy;
-  AbstractDecoder &decoder;
   const ALSAHeader &alsaHeader;
 
-  std::unique_ptr<std::thread> playThread;
+  std::unique_ptr<std::thread> patheon;
   enum { PLAY, PAUSE } control;
   std::mutex mutex;
   std::condition_variable cv;

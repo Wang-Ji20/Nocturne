@@ -58,8 +58,8 @@ int main(int argc, char **argv) {
 
   DecoderRef decoder = getDecoder(argv[1]);
   Debussy debussy(*decoder);
-  ALSA alsa(*decoder, debussy, false);
-  alsa.play();
+  ALSA alsa(debussy);
+  alsa.Lachaise();
 
   while (prompt(), std::cin) {
     Lexer lexer(&std::cin);
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
       alsa.pause();
       break;
     case Token::PLAY:
-      alsa.play();
+      alsa.resume();
       break;
     case Token::QUIT:
       return 0;
