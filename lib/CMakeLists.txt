@@ -1,9 +1,11 @@
 add_subdirectory(Decoder)
 add_subdirectory(ALSAInterface)
+add_subdirectory(Effector)
 
 add_library(nocturne STATIC ${ALL_OBJECT_FILES})
 
 set(NOCTURNE_LIBS
+  Effector
   Decoder
   ALSAInterface
 )

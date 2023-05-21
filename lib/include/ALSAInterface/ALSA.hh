@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Decoder/abstractDecoder.hh"
+#include "Effector/Debussy.hh"
 
 #include <alsa/asoundlib.h>
 #include <condition_variable>
@@ -15,7 +16,7 @@
 class ALSA {
 public:
   // TODO: this magic number 5512 sucks, but I cannot fix it.
-  ALSA(AbstractDecoder &decoder, bool naive = false,
+  ALSA(AbstractDecoder &decoder, Debussy &debussy, bool naive = false,
        snd_pcm_uframes_t frames = 5512);
   ~ALSA();
 
@@ -32,7 +33,6 @@ public:
 private:
   void playLoop();
   bool playInterleave();
-  bool playPlanar();
 
   snd_pcm_t *handle;
   snd_pcm_hw_params_t *params;
@@ -42,6 +42,7 @@ private:
   int dir;
   int size;
 
+  Debussy &debussy;
   AbstractDecoder &decoder;
   const ALSAHeader &alsaHeader;
 

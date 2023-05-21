@@ -19,8 +19,10 @@ static void checksnd(int rc, const char *msg) {
   }
 }
 
-ALSA::ALSA(AbstractDecoder &decoder, bool naive, snd_pcm_uframes_t frames)
-    : frames{frames}, decoder{decoder}, alsaHeader{decoder.getHeader()} {
+ALSA::ALSA(AbstractDecoder &decoder, Debussy& debussy, bool naive,
+           snd_pcm_uframes_t frames)
+    : frames{frames}, debussy{debussy}, decoder{decoder},
+      alsaHeader{decoder.getHeader()} {
 
   /* Open PCM device for playback. */
   checksnd(snd_pcm_open(&handle, "default", SND_PCM_STREAM_PLAYBACK, 0),
@@ -36,9 +38,9 @@ ALSA::ALSA(AbstractDecoder &decoder, bool naive, snd_pcm_uframes_t frames)
 
   /* access mode */
 
-  checksnd(
-      snd_pcm_hw_params_set_access(handle, params, alsaHeader.accessMethod),
-      "snd_pcm_hw_params_set_access");
+  checksnd(snd_pcm_hw_params_set_access(handle, params,
+                                        SND_PCM_ACCESS_RW_INTERLEAVED),
+           "snd_pcm_hw_params_set_access");
 
   /* set bits_per_sample */
 
@@ -81,21 +83,18 @@ ALSA::~ALSA() {
 }
 
 void ALSA::playLoop() {
-  auto playFunc = alsaHeader.accessMethod == SND_PCM_ACCESS_RW_INTERLEAVED
-                      ? &ALSA::playInterleave
-                      : &ALSA::playPlanar;
   do {
     std::unique_lock<std::mutex> lock(mutex);
     if (control == PAUSE)
       cv.wait(lock, [this] { return control == PLAY; });
     else
       lock.unlock();
-  } while (((this->*playFunc)()));
+  } while (playInterleave());
 }
 
 bool ALSA::playInterleave() {
-  char* buffer;
-  if (decoder.getDataInterleave(&buffer, &size, &frames)) {
+  char *buffer;
+  if (debussy.getData(&buffer, &size, &frames)) {
     int retv = 0;
     if ((retv = snd_pcm_writei(handle, buffer, frames)) == -EPIPE) {
       fprintf(stderr, "underrun occurred\n");
@@ -117,33 +116,9 @@ bool ALSA::playInterleave() {
   return true;
 }
 
-bool ALSA::playPlanar() {
-  char **buffers;
-  if (decoder.getDataPlanar(&buffers, &size, &frames)) {
-    int retv = 0;
-    if ((retv = snd_pcm_writen(handle, (void**)buffers, frames)) == -EPIPE) {
-      fprintf(stderr, "underrun occurred\n");
-      int code = snd_pcm_prepare(handle);
-      if (code < 0) {
-        fprintf(stderr, "prepare failed, code is %d\n", code);
-      } else {
-        fprintf(stderr, "prepared\n");
-      }
-    } else if (retv < 0) {
-      fprintf(stderr, "error from writei: %s\n", snd_strerror(retv));
-      throw std::runtime_error("error from writei");
-    } else if (retv != (int)frames) {
-      fprintf(stderr, "short write, write %d frames\n", retv);
-    }
-  } else {
-    return false;
-  }
-  return true;
-}
-
 void ALSA::naivePlay() {
   int retv = 0;
-  char* buffer = nullptr;
+  char *buffer = nullptr;
   while (decoder.getData(buffer, size)) {
     if ((retv = snd_pcm_writei(handle, buffer, frames)) == -EPIPE) {
       // fprintf(stderr, "underrun occurred\n");

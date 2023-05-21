@@ -16,6 +16,8 @@ public:
   int getData(char *buffer, int size) override;
   [[nodiscard]] bool getDataInterleave(char **buffer, int *size,
                                        unsigned long *frame) override;
+  [[nodiscard]] virtual bool getDataPlanar(char ***buffers, int *size,
+                                               unsigned long *frame) override;
   ~FFDecoder();
 
 private:
@@ -35,7 +37,4 @@ private:
   // data
   AVFrame *frame{nullptr};
   AVPacket *packet{nullptr};
-
-  // parser
-  // AVCodecParserContext *parser{nullptr};
 };
