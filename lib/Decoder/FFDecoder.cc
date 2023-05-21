@@ -67,9 +67,9 @@ FFDecoder::FFDecoder(std::string_view filename) {
 // seek to next audio stream
 // returns true if there is a next stream, false otherwise
 bool FFDecoder::nextStream() {
-  for (size_t i = audioStreamIndex + 1; i < formatContext->nb_streams; i++) {
-    if (formatContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
-      audioStreamIndex = i;
+  for (audioStreamIndex = audioStreamIndex + 1;
+       audioStreamIndex < int(formatContext->nb_streams); audioStreamIndex++) {
+    if (formatContext->streams[audioStreamIndex]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
       break;
     }
   }
@@ -181,7 +181,7 @@ bool FFDecoder::getDataInterleave(char **buffer, int *size,
   if (precedeFrame()) {
     *buffer = (char *)frame->data[0];
     *frames = frame->nb_samples;
-    *size = frame->nb_samples * frame->nb_samples *
+    *size = frame->nb_samples * frame->channels *
             av_get_bytes_per_sample(codecContext->sample_fmt);
   } else {
     return false;
@@ -189,12 +189,12 @@ bool FFDecoder::getDataInterleave(char **buffer, int *size,
   return true;
 }
 
-bool FFDecoder::getDataPlanar(char ***buffers, int *size, unsigned long *frames) {
+bool FFDecoder::getDataPlanar(char ***buffers, int *size,
+                              unsigned long *frames) {
   if (precedeFrame()) {
     *buffers = (char **)frame->data;
     *frames = frame->nb_samples;
-    *size = frame->nb_samples * frame->nb_samples *
-            av_get_bytes_per_sample(codecContext->sample_fmt);
+    *size = av_get_bytes_per_sample(codecContext->sample_fmt);
   } else {
     return false;
   }
