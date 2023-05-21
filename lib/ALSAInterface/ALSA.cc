@@ -20,7 +20,8 @@ static void checksnd(int rc, const char *msg) {
 }
 
 ALSA::ALSA(AbstractDecoder &decoder, bool naive, snd_pcm_uframes_t frames)
-    : frames(frames), decoder(decoder) {
+    : frames{frames}, decoder{decoder}, alsaHeader{decoder.getHeader()} {
+
   /* Open PCM device for playback. */
   checksnd(snd_pcm_open(&handle, "default", SND_PCM_STREAM_PLAYBACK, 0),
            "snd_pcm_open");
@@ -33,68 +34,31 @@ ALSA::ALSA(AbstractDecoder &decoder, bool naive, snd_pcm_uframes_t frames)
 
   /* Set the desired hardware parameters. */
 
-  const auto [sampleRate, channels, bitsPerSample] = decoder.getHeader();
+  /* access mode */
 
-  /* Interleaved mode */
-
-  checksnd(snd_pcm_hw_params_set_access(handle, params,
-                                        SND_PCM_ACCESS_RW_INTERLEAVED),
-           "snd_pcm_hw_params_set_access");
+  checksnd(
+      snd_pcm_hw_params_set_access(handle, params, alsaHeader.accessMethod),
+      "snd_pcm_hw_params_set_access");
 
   /* set bits_per_sample */
 
-  switch (bitsPerSample) {
-  case 8:
-    checksnd(snd_pcm_hw_params_set_format(handle, params, SND_PCM_FORMAT_U8),
-             "snd_pcm_hw_params_set_format");
-    break;
-  case 16:
-    checksnd(
-        snd_pcm_hw_params_set_format(handle, params, SND_PCM_FORMAT_S16_LE),
-        "snd_pcm_hw_params_set_format");
-    break;
-
-  case 24:
-    checksnd(
-        snd_pcm_hw_params_set_format(handle, params, SND_PCM_FORMAT_S24_LE),
-        "snd_pcm_hw_params_set_format");
-    break;
-
-  case 32:
-
-    checksnd(
-        snd_pcm_hw_params_set_format(handle, params, SND_PCM_FORMAT_S32_LE),
-        "snd_pcm_hw_params_set_format");
-    break;
-
-  default:
-    throw std::runtime_error("Unsupported bits_per_sample");
-  }
+  checksnd(snd_pcm_hw_params_set_format(handle, params, alsaHeader.format),
+           "snd_pcm_hw_params_set_format");
 
   /* set sample rate */
-  unsigned int sample_rate = sampleRate;
+  unsigned int sample_rate = alsaHeader.sample_rate;
 
   checksnd(snd_pcm_hw_params_set_rate_near(handle, params, &sample_rate, &dir),
            "snd_pcm_hw_params_set_rate_near");
 
   /* set channels */
-  checksnd(snd_pcm_hw_params_set_channels(handle, params, channels),
+  checksnd(snd_pcm_hw_params_set_channels(handle, params, alsaHeader.channels),
            "snd_pcm_hw_params_set_channels");
-
-  checksnd(
-      snd_pcm_hw_params_set_period_size_near(handle, params, &frames, &dir),
-      "snd_pcm_hw_params_set_period_size_near");
 
   /* Write the parameters to the driver */
   checksnd(snd_pcm_hw_params(handle, params), "snd_pcm_hw_params");
 
-  /* Use a buffer large enough to hold one period */
-  checksnd(snd_pcm_hw_params_get_period_size(params, &frames, &dir),
-           "snd_pcm_hw_params_get_period_size");
-
-  size = frames * channels * bitsPerSample / 8;
-
-  buffer = new char[size];
+  size = frames * alsaHeader.channels * alsaHeader.bits_per_sample / 8;
 
   // music player control unit
   snd_mixer_open(&mixer, 0);
@@ -103,8 +67,8 @@ ALSA::ALSA(AbstractDecoder &decoder, bool naive, snd_pcm_uframes_t frames)
   snd_mixer_load(mixer);
 
   fprintf(stderr, "playing this %d Hz %d channels %d bits_per_sample audio\n",
-          sample_rate, channels, bitsPerSample);
-  fprintf(stderr, "buffer size is %d, period size is %lu\n", size, frames);
+          sample_rate, alsaHeader.channels, alsaHeader.bits_per_sample);
+  fprintf(stderr, "period size is %lu\n", frames);
 
   if (!naive)
     playThread = std::make_unique<std::thread>(&ALSA::playLoop, this);
@@ -114,43 +78,72 @@ ALSA::~ALSA() {
   snd_pcm_drain(handle);
   snd_pcm_close(handle);
   snd_mixer_close(mixer);
-  delete[] buffer;
 }
 
 void ALSA::playLoop() {
-  bool hasData = true;
-  int loopCounter;
-  while (hasData) {
+  auto playFunc = alsaHeader.accessMethod == SND_PCM_ACCESS_RW_INTERLEAVED
+                      ? &ALSA::playInterleave
+                      : &ALSA::playPlanar;
+  do {
     std::unique_lock<std::mutex> lock(mutex);
     if (control == PAUSE)
       cv.wait(lock, [this] { return control == PLAY; });
     else
       lock.unlock();
+  } while (((this->*playFunc)()));
+}
 
-    loopCounter = 0;
-    while (loopCounter < 256 && (hasData = decoder.getData(buffer, size))) {
-      loopCounter++;
-      int retv = 0;
-      if ((retv = snd_pcm_writei(handle, buffer, frames)) == -EPIPE) {
-        fprintf(stderr, "underrun occurred\n");
-        int code = snd_pcm_prepare(handle);
-        if (code < 0) {
-          fprintf(stderr, "prepare failed, code is %d\n", code);
-        } else {
-          fprintf(stderr, "prepared\n");
-        }
-      } else if (retv < 0) {
-        fprintf(stderr, "error from writei: %s\n", snd_strerror(retv));
-        throw std::runtime_error("error from writei");
-      } else if (retv != (int)frames) {
-        fprintf(stderr, "short write, write %d frames\n", retv);
+bool ALSA::playInterleave() {
+  char* buffer;
+  if (decoder.getDataInterleave(&buffer, &size, &frames)) {
+    int retv = 0;
+    if ((retv = snd_pcm_writei(handle, buffer, frames)) == -EPIPE) {
+      fprintf(stderr, "underrun occurred\n");
+      int code = snd_pcm_prepare(handle);
+      if (code < 0) {
+        fprintf(stderr, "prepare failed, code is %d\n", code);
+      } else {
+        fprintf(stderr, "prepared\n");
       }
+    } else if (retv < 0) {
+      fprintf(stderr, "error from writei: %s\n", snd_strerror(retv));
+      throw std::runtime_error("error from writei");
+    } else if (retv != (int)frames) {
+      fprintf(stderr, "short write, write %d frames\n", retv);
     }
+  } else {
+    return false;
   }
+  return true;
+}
+
+bool ALSA::playPlanar() {
+  char **buffers;
+  if (decoder.getDataPlanar(&buffers, &size, &frames)) {
+    int retv = 0;
+    if ((retv = snd_pcm_writen(handle, (void**)buffers, frames)) == -EPIPE) {
+      fprintf(stderr, "underrun occurred\n");
+      int code = snd_pcm_prepare(handle);
+      if (code < 0) {
+        fprintf(stderr, "prepare failed, code is %d\n", code);
+      } else {
+        fprintf(stderr, "prepared\n");
+      }
+    } else if (retv < 0) {
+      fprintf(stderr, "error from writei: %s\n", snd_strerror(retv));
+      throw std::runtime_error("error from writei");
+    } else if (retv != (int)frames) {
+      fprintf(stderr, "short write, write %d frames\n", retv);
+    }
+  } else {
+    return false;
+  }
+  return true;
 }
 
 void ALSA::naivePlay() {
   int retv = 0;
+  char* buffer = nullptr;
   while (decoder.getData(buffer, size)) {
     if ((retv = snd_pcm_writei(handle, buffer, frames)) == -EPIPE) {
       // fprintf(stderr, "underrun occurred\n");

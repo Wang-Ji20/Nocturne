@@ -14,6 +14,8 @@ class FFDecoder : public AbstractDecoder {
 public:
   FFDecoder(std::string_view filename);
   int getData(char *buffer, int size) override;
+  [[nodiscard]] bool getDataInterleave(char **buffer, int *size,
+                                       unsigned long *frame) override;
   ~FFDecoder();
 
 private:
@@ -35,5 +37,5 @@ private:
   AVPacket *packet{nullptr};
 
   // parser
-  AVCodecParserContext *parser{nullptr};
+  // AVCodecParserContext *parser{nullptr};
 };

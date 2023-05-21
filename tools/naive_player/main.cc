@@ -41,9 +41,9 @@ void prompt() {
 DecoderRef getDecoder(char *filename) {
   std::string_view s(filename);
   // ends with wav
-  if (s.size() >= 4 && s.substr(s.size() - 4) == ".wav") {
-    return std::make_unique<WAVDecoder>(s);
-  }
+  // if (s.size() >= 4 && s.substr(s.size() - 4) == ".wav") {
+  //   return std::make_unique<WAVDecoder>(s);
+  // }
   // ends with other format
   return std::make_unique<FFDecoder>(s);
 }
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
   launch();
 
   DecoderRef decoder = getDecoder(argv[1]);
-  ALSA alsa(*decoder, false, 5512);
+  ALSA alsa(*decoder, false);
   alsa.play();
 
   while (prompt(), std::cin) {

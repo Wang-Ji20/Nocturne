@@ -2,6 +2,39 @@
 
 // NOTE: After all, cpp and c are two different languages
 extern "C" {
+#include "alsa/asoundlib.h"
+
+static snd_pcm_access_t getAccessMethod(AVCodecContext *ctx) {
+  AVSampleFormat format = ctx->sample_fmt;
+  if (format == AV_SAMPLE_FMT_FLTP ||
+      format == AV_SAMPLE_FMT_DBLP ||
+      format == AV_SAMPLE_FMT_S32P ||
+      format == AV_SAMPLE_FMT_S16P ||
+      format == AV_SAMPLE_FMT_U8P
+  ) {
+    return SND_PCM_ACCESS_RW_NONINTERLEAVED;
+  }
+  return SND_PCM_ACCESS_RW_INTERLEAVED;
+}
+
+static snd_pcm_format_t getFormat(AVSampleFormat format) {
+  switch (format) {
+  case AV_SAMPLE_FMT_U8:
+    return SND_PCM_FORMAT_U8;
+  case AV_SAMPLE_FMT_S16:
+    return SND_PCM_FORMAT_S16;
+  case AV_SAMPLE_FMT_S32:
+    return SND_PCM_FORMAT_S32;
+  case AV_SAMPLE_FMT_FLTP:
+  case AV_SAMPLE_FMT_FLT:
+    return SND_PCM_FORMAT_FLOAT;
+  case AV_SAMPLE_FMT_DBLP:
+  case AV_SAMPLE_FMT_DBL:
+    return SND_PCM_FORMAT_FLOAT64;
+  default:
+    return SND_PCM_FORMAT_UNKNOWN;
+  }
+}
 
 // open input file, and allocate format context
 FFDecoder::FFDecoder(std::string_view filename) {
@@ -74,21 +107,15 @@ bool FFDecoder::nextStream() {
   }
 
   // fill ALSA
-  alsaHeader.bits_per_sample = codecContext->bits_per_raw_sample;
+  alsaHeader.bits_per_sample =
+      8 * av_get_bytes_per_sample(codecContext->sample_fmt);
   alsaHeader.channels = codecContext->channels;
   alsaHeader.sample_rate = codecContext->sample_rate;
+  alsaHeader.format = getFormat(codecContext->sample_fmt);
+  alsaHeader.accessMethod = getAccessMethod(codecContext);
 
   if (avcodec_open2(codecContext, codec, nullptr) < 0) {
     throw std::runtime_error("Cannot open codec");
-  }
-
-  if (parser != nullptr) {
-    av_parser_close(parser);
-  }
-  parser = av_parser_init(
-      formatContext->streams[audioStreamIndex]->codecpar->codec_id);
-  if (!parser) {
-    throw std::runtime_error("Cannot init parser");
   }
 
   return true;
@@ -98,7 +125,6 @@ bool FFDecoder::nextStream() {
 // true if there is more data
 // throws if error
 bool FFDecoder::precedePacket() {
-start:
   do {
     switch (av_read_frame(formatContext, packet)) {
     case 0:
@@ -107,20 +133,12 @@ start:
       if (!nextStream()) {
         return false;
       }
-      goto start;
+      continue;
     default:
       throw std::runtime_error("Cannot read frame");
     }
     // invalid frame, continue
   } while (packet->stream_index != audioStreamIndex);
-
-  // send packet to parser
-  //   if (av_parser_parse2(parser, codecContext, &packet->data, &packet->size,
-  //                        packet->data, packet->size, AV_NOPTS_VALUE,
-  //                        AV_NOPTS_VALUE, 0) < 0) {
-  //     throw std::runtime_error("Cannot parse packet");
-  //   }
-
 
   // send packet to decoder
   int retv = 0;
@@ -153,18 +171,31 @@ start:
 }
 
 // assert size > frame size
+// we can use std::span if cpp20
 int FFDecoder::getData(char *buffer, int size) {
   if (precedeFrame() && frame->nb_samples * frame->channels < size) {
-    memcpy(buffer, frame->data[0], frame->nb_samples*frame->channels);
+    memcpy(buffer, frame->data[0], frame->nb_samples * frame->channels);
   }
   return frame->nb_samples * frame->channels;
+}
+
+bool FFDecoder::getDataInterleave(char **buffer, int *size,
+                                  unsigned long *frames) {
+  if (precedeFrame()) {
+    *buffer = (char *)frame->data[0];
+    *frames = frame->nb_samples;
+    *size = frame->nb_samples * frame->nb_samples *
+            av_get_bytes_per_sample(codecContext->sample_fmt);
+  } else {
+    return false;
+  }
+  return true;
 }
 
 FFDecoder::~FFDecoder() {
   avformat_close_input(&formatContext);
   av_frame_free(&frame);
   av_packet_free(&packet);
-  av_parser_close(parser);
   avcodec_free_context(&codecContext);
 }
 

@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include "alsa/asoundlib.h"
+
 #include <fstream>
 #include <string>
 
@@ -10,6 +12,8 @@ struct ALSAHeader {
   unsigned int sample_rate;
   unsigned short channels;
   unsigned short bits_per_sample;
+  snd_pcm_format_t format;
+  snd_pcm_access_t accessMethod;
 };
 
 class AbstractDecoder {
@@ -25,6 +29,14 @@ public:
   const ALSAHeader &getHeader() const noexcept { return alsaHeader; }
 
   [[nodiscard]] virtual int getData(char *buffer, int size) = 0;
+  [[nodiscard]] virtual bool getDataInterleave(char **buffer, int *size,
+                                               unsigned long *frame) {
+    return false;
+  };
+  [[nodiscard]] virtual bool getDataPlanar(char ***buffers, int *size,
+                                               unsigned long *frame) {
+    return false;
+  };
 
 protected:
   ALSAHeader alsaHeader{};

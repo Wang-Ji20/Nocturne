@@ -31,15 +31,19 @@ public:
 
 private:
   void playLoop();
+  bool playInterleave();
+  bool playPlanar();
 
   snd_pcm_t *handle;
   snd_pcm_hw_params_t *params;
   snd_mixer_t *mixer;
+
   snd_pcm_uframes_t frames;
   int dir;
   int size;
-  char *buffer;
+
   AbstractDecoder &decoder;
+  const ALSAHeader &alsaHeader;
 
   std::unique_ptr<std::thread> playThread;
   enum { PLAY, PAUSE } control;
