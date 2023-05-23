@@ -13,11 +13,12 @@
 class Debussy {
 public:
   Debussy(AbstractDecoder &decoder);
-  Maybe<std::vector<char>> getData();
+  Maybe<EffectorBuf> getData();
 
   // for compatibility with ALSA
   [[nodiscard]] bool getData(char **buffer, int *size, size_t *frame);
-  const ALSAHeader& getHeader() const noexcept { return decoder.getHeader(); }
+  const ALSAHeader &getHeader() const noexcept { return decoder.getHeader(); }
+  void speedup(double factor);
 
 private:
   // the effector that is currently being used as root

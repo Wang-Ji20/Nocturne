@@ -4,11 +4,12 @@
 
 class SpeedEffector final : public AbstractEffector {
 public:
-  SpeedEffector(AbstractEffector &effector, double speed);
-  virtual Maybe<std::vector<char>> getData() override;
+  SpeedEffector(EffectorRef effector, double speed);
+  virtual Maybe<EffectorBuf> getData() override;
   ~SpeedEffector(){};
 
 private:
-    AbstractEffector &effector;
+    EffectorRef effector;
+    EffectorBuf buf;
     double speed;
 };

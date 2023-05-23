@@ -3,8 +3,7 @@
 InterleaveEffector::InterleaveEffector(AbstractDecoder &decoder)
     : decoder{decoder} {}
 
-
-Maybe<std::vector<char>> InterleaveEffector::getData() {
+Maybe<EffectorBuf> InterleaveEffector::getData() {
   data_.clear();
   char **bufs;
   int size;

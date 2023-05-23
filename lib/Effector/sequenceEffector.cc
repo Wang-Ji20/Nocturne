@@ -3,7 +3,7 @@
 SequenceEffector::SequenceEffector(AbstractDecoder &decoder)
     : decoder{decoder} {}
 
-Maybe<std::vector<char>> SequenceEffector::getData() {
+Maybe<EffectorBuf> SequenceEffector::getData() {
   data_.clear();
   char *buffer;
   int size;

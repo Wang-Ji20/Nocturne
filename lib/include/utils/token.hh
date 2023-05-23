@@ -15,6 +15,7 @@ enum Token {
     PAUSE,
     STOP,
     VOLUME,
+    SPEED,
     ERROR,
     QUIT,
 };

@@ -9,10 +9,10 @@ class SequenceEffector final : public AbstractEffector {
 public:
   // constructor for INTERLEAVED data
   SequenceEffector(AbstractDecoder &decoder);
-  virtual Maybe<std::vector<char>> getData() override;
+  virtual Maybe<EffectorBuf> getData() override;
   ~SequenceEffector(){};
 
 private:
-  std::vector<char> data_;
+  EffectorBuf data_;
   AbstractDecoder &decoder;
 };
