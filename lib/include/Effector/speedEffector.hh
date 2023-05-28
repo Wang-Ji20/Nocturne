@@ -2,7 +2,7 @@
 
 #include "Effector/abstractEffector.hh"
 
-class SpeedEffector final : public AbstractEffector {
+class SpeedEffector: public AbstractEffector {
 public:
   SpeedEffector(EffectorRef effector, double speed);
   virtual Maybe<EffectorBuf> getData() override;

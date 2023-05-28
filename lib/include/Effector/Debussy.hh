@@ -24,4 +24,5 @@ private:
   // the effector that is currently being used as root
   std::unique_ptr<AbstractEffector> effector;
   AbstractDecoder &decoder;
+  double speed = 1.0;
 };

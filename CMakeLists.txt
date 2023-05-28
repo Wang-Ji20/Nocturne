@@ -19,9 +19,18 @@ endif()
 
 message(STATUS "ALSA_LIBRARIES: ${ALSA_LIBRARIES}")
 
+#
+# !! ATTENTION
+# clear cache (CMakeCache.txt) if you change this
+#
+
 find_package(FLEX REQUIRED)
 
-find_package(FFmpeg COMPONENTS AVUTIL AVFORMAT AVCODEC REQUIRED)
+find_package(FFmpeg COMPONENTS AVCODEC AVFORMAT AVFILTER AVUTIL REQUIRED)
+
+#
+# END ATTENTION
+#
 
 # use pthread
 set(THREADS_PREFER_PTHREAD_FLAG ON)

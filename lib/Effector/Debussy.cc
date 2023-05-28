@@ -29,4 +29,5 @@ bool Debussy::getData(char **bufs, int *size, size_t *frame) {
 
 void Debussy::speedup(double factor) {
   effector = std::make_unique<SpeedEffector>(std::move(effector), factor);
+  speed *= factor;
 }
