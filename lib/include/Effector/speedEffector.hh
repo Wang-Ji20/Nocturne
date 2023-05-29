@@ -1,15 +1,21 @@
 #pragma once
 
+#include "Decoder/abstractDecoder.hh"
 #include "Effector/abstractEffector.hh"
 
-class SpeedEffector: public AbstractEffector {
+class SpeedEffector : public AbstractEffector {
 public:
-  SpeedEffector(EffectorRef effector, double speed);
-  virtual Maybe<EffectorBuf> getData() override;
+  SpeedEffector(EffectorOwner effector, double speed, const ALSAHeader &header);
+  virtual bool next() override;
+  virtual bool hasData() override;
+  virtual EffectorBuf& getData() override;
+  void setSpeed(double speed) { this->speed = speed; };
+  const ALSAHeader &getHeader() { return header; };
   ~SpeedEffector(){};
 
 private:
-    EffectorRef effector;
-    EffectorBuf buf;
-    double speed;
+  const ALSAHeader &header;
+  EffectorOwner effector;
+  EffectorBuf buf;
+  double speed;
 };

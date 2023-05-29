@@ -6,7 +6,9 @@
 class InterleaveEffector final : public AbstractEffector {
 public:
   InterleaveEffector(AbstractDecoder &decoder);
-  virtual Maybe<EffectorBuf> getData() override;
+  virtual bool next() override;
+  virtual bool hasData() override;
+  virtual EffectorBuf& getData() override;
   ~InterleaveEffector(){};
 
 private:

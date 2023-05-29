@@ -3,13 +3,22 @@
 SequenceEffector::SequenceEffector(AbstractDecoder &decoder)
     : decoder{decoder} {}
 
-Maybe<EffectorBuf> SequenceEffector::getData() {
+bool SequenceEffector::next() {
+  DRAINRET;
   data_.clear();
   char *buffer;
   int size;
   size_t frame;
   if (decoder.getDataInterleave(&buffer, &size, &frame)) {
     data_.insert(data_.end(), buffer, buffer + size);
+    return true;
   }
-  return data_;
+  DRAIN;
 }
+
+bool SequenceEffector::hasData() {
+  DRAINRET;
+  return true;
+}
+
+EffectorBuf &SequenceEffector::getData() { return data_; }

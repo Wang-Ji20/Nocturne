@@ -110,6 +110,7 @@ bool FFDecoder::nextStream() {
   alsaHeader.sample_rate = codecContext->sample_rate;
   alsaHeader.format = getFormat(codecContext->sample_fmt);
   alsaHeader.accessMethod = getAccessMethod(codecContext);
+  alsaHeader.nb_samples = codecContext->frame_size;
 
   if (avcodec_open2(codecContext, codec, nullptr) < 0) {
     throw std::runtime_error("Cannot open codec");

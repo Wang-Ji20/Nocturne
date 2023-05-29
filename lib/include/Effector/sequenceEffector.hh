@@ -9,7 +9,9 @@ class SequenceEffector final : public AbstractEffector {
 public:
   // constructor for INTERLEAVED data
   SequenceEffector(AbstractDecoder &decoder);
-  virtual Maybe<EffectorBuf> getData() override;
+  virtual bool next() override;
+  virtual bool hasData() override;
+  virtual EffectorBuf& getData() override;
   ~SequenceEffector(){};
 
 private:
