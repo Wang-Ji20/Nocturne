@@ -28,7 +28,7 @@ bool Debussy::next() {
 }
 
 void Debussy::getData(char **bufs, int *size, size_t *frame) {
-  auto &data = effector->getData();
+  auto & data = effector->getData();
   *bufs = data.data();
   *size = data.size();
   *frame = data.size() / (decoder.getHeader().bits_per_sample / 8) /

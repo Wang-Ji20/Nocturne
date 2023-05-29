@@ -18,16 +18,16 @@ static void processOnePoint(const EffectorBuf &input, EffectorBuf &transformed,
     // big-endian, so the first byte is the high byte
     for (u32 j = 0; j < bytesPerSample; j++) {
       sample_channel_left +=
-          input[std::floor(bytesPerSample * channels * samplePos) +
-                bytesPerSample * i + j]
+          input[std::floor(bytesPerSample * channels * samplePos +
+                           bytesPerSample * i + j)]
           << (8 * (bytesPerSample - j - 1));
     }
 
     SamplePoint sample_channel_right = 0;
     for (u32 j = 0; j < bytesPerSample; j++) {
       sample_channel_right +=
-          input[std::ceil(bytesPerSample * channels * samplePos) +
-                bytesPerSample * i + j + bytesPerSample * channels]
+          input[std::ceil(bytesPerSample * channels * samplePos +
+                          bytesPerSample * i + j)]
           << (8 * (bytesPerSample - j - 1));
     }
     SamplePoint sample_channel =
@@ -76,7 +76,8 @@ bool SpeedEffector::next() {
   }
   auto &v = effector->getData();
   buf.clear();
-  auto new_size = static_cast<size_t>(8 * v.size() / header.channels / header.bits_per_sample / speed);
+  auto new_size = static_cast<size_t>(8 * v.size() / header.channels /
+                                      header.bits_per_sample / speed);
   buf.reserve(new_size);
   for (size_t i = 0; i < new_size; i++) {
     processOneSample(v, buf, header.channels, header.bits_per_sample,
