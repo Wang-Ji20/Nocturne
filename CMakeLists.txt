@@ -19,15 +19,24 @@ endif()
 
 message(STATUS "ALSA_LIBRARIES: ${ALSA_LIBRARIES}")
 
+#
+# !! ATTENTION
+# clear cache (CMakeCache.txt) if you change this
+#
+
 find_package(FLEX REQUIRED)
 
-find_package(FFmpeg COMPONENTS AVUTIL AVFORMAT AVCODEC REQUIRED)
+find_package(FFmpeg COMPONENTS AVCODEC AVFORMAT AVUTIL REQUIRED)
+
+#
+# END ATTENTION
+#
 
 # use pthread
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Werror")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Werror -fsanitize=address")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wno-unused-parameter -Wno-attributes")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)

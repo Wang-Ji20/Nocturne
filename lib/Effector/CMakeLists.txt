@@ -4,6 +4,7 @@ add_library(
   Debussy.cc
   interleaveEffector.cc
   sequenceEffector.cc
+  speedEffector.cc
 )
 
 set(

@@ -40,11 +40,6 @@ void prompt() {
 
 DecoderRef getDecoder(char *filename) {
   std::string_view s(filename);
-  // ends with wav
-  // if (s.size() >= 4 && s.substr(s.size() - 4) == ".wav") {
-  //   return std::make_unique<WAVDecoder>(s);
-  // }
-  // ends with other format
   return std::make_unique<FFDecoder>(s);
 }
 
@@ -67,6 +62,9 @@ int main(int argc, char **argv) {
     switch (token) {
     case Token::VOLUME:
       alsa.setVolume(std::any_cast<long>(lexer.getValue()));
+      break;
+    case Token::SPEED:
+      debussy.speedup(std::any_cast<double>(lexer.getValue()));
       break;
     case Token::PAUSE:
       alsa.pause();

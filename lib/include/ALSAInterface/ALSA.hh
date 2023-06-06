@@ -15,7 +15,6 @@
 
 class ALSA {
 public:
-  // TODO: this magic number 5512 sucks, but I cannot fix it.
   ALSA(Debussy &debussy);
   ~ALSA();
 
@@ -26,6 +25,7 @@ public:
 
   // play the music in a separate thread
   void Lachaise();
+  // play music in current thread
   void CemeteryOfInnocents();
 
   void resume();

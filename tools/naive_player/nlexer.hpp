@@ -17,6 +17,11 @@ public:
         ;
       value = strtol(c, nullptr, 10);
       return value;
+    case SPEED:
+      for (; *c && !std::isdigit(c[0]); c++)
+        ;
+      value = strtod(c, nullptr);
+      return value;
     default:
       return std::any();
     }

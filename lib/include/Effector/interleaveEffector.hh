@@ -6,10 +6,12 @@
 class InterleaveEffector final : public AbstractEffector {
 public:
   InterleaveEffector(AbstractDecoder &decoder);
-  virtual Maybe<std::vector<char>> getData() override;
+  virtual bool next() override;
+  virtual bool hasData() override;
+  virtual EffectorBuf& getData() override;
   ~InterleaveEffector(){};
 
 private:
-  std::vector<char> data_;
+  EffectorBuf data_;
   AbstractDecoder &decoder;
 };

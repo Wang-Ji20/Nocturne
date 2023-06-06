@@ -99,7 +99,8 @@ void ALSA::CemeteryOfInnocents() {
 
 bool ALSA::playInterleave() {
   char *buffer;
-  if (debussy.getData(&buffer, &size, &frames)) {
+  if (debussy.next()) {
+    debussy.getData(&buffer, &size, &frames);
     int retv = 0;
     if ((retv = snd_pcm_writei(handle, buffer, frames)) == -EPIPE) {
       fprintf(stderr, "underrun occurred\n");
